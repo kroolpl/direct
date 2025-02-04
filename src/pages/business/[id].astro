@@ -1,0 +1,41 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase, type Business } from '../../lib/supabase';
+
+const { id } = Astro.params;
+
+const { data: business, error } = await supabase
+  .from('businesses')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !business) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={business.name}>
+  <div class="bg-white rounded-lg shadow-sm p-8">
+    <h1 class="text-3xl font-bold text-gray-900">{business.name}</h1>
+    
+    <div class="mt-6 space-y-4">
+      <p class="text-gray-600">{business.description}</p>
+      
+      <div class="border-t pt-4">
+        <h2 class="text-xl font-semibold text-gray-900">Contact Information</h2>
+        <div class="mt-4 space-y-2 text-gray-600">
+          <p>📍 {business.address}</p>
+          {business.phone && <p>📞 {business.phone}</p>}
+          {business.website && (
+            <p>
+              🌐 <a href={business.website} class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                {business.website}
+              </a>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout> 
