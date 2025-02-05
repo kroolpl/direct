@@ -2,11 +2,22 @@
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
-// Check authentication
-const { data: { session } } = await supabase.auth.getSession();
-console.log('Dashboard session:', session);
-if (!session) {
-  console.log('No session, redirecting to login');
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/login');
+}
+
+// Set the session
+const { data: { session }, error } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+});
+
+if (error || !session) {
+  Astro.cookies.delete("sb-access-token", { path: "/" });
+  Astro.cookies.delete("sb-refresh-token", { path: "/" });
   return Astro.redirect('/login');
 }
 
@@ -37,6 +48,8 @@ console.log('User businesses:', businesses);
       <h1 class="text-2xl font-bold text-gray-900">My Dashboard</h1>
       <button
         id="logoutBtn"
+        formaction="/api/auth/signout"
+        formmethod="POST"
         class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
       >
         Logout
@@ -59,14 +72,4 @@ console.log('User businesses:', businesses);
       )}
     </div>
   </div>
-</Layout>
-
-<script>
-  import { supabase } from '../lib/supabase';
-
-  const logoutBtn = document.getElementById('logoutBtn');
-  logoutBtn?.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
-  });
-</script> 
+</Layout> 
