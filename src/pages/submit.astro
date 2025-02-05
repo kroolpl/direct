@@ -3,10 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
 // Check authentication
-const { data: { session } } = await supabase.auth.getSession();
-if (!session) {
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
   return Astro.redirect('/login');
 }
+
+// Set the session
+const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+});
+
+if (sessionError || !session) {
+  Astro.cookies.delete("sb-access-token", { path: "/" });
+  Astro.cookies.delete("sb-refresh-token", { path: "/" });
+  return Astro.redirect('/login');
+}
+
+let submitError = '';
+let submitSuccess = false;
 
 // Handle form submission
 if (Astro.request.method === 'POST') {
@@ -28,14 +45,21 @@ if (Astro.request.method === 'POST') {
       user_id: session.user.id,
     };
 
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from('businesses')
       .insert([business]);
 
-    if (error) throw error;
-    return Astro.redirect('/');
-  } catch (error) {
+    if (insertError) {
+      console.error('Error inserting business:', insertError);
+      submitError = insertError.message;
+    } else {
+      submitSuccess = true;
+      // Redirect after a short delay
+      return Astro.redirect('/dashboard');
+    }
+  } catch (error: any) {
     console.error('Error:', error);
+    submitError = error.message;
   }
 }
 ---
@@ -43,6 +67,18 @@ if (Astro.request.method === 'POST') {
 <Layout title="Submit Business">
   <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Add Your Business</h1>
+    
+    {submitError && (
+      <div class="mb-4 p-4 text-red-700 bg-red-100 rounded-md">
+        {submitError}
+      </div>
+    )}
+    
+    {submitSuccess && (
+      <div class="mb-4 p-4 text-green-700 bg-green-100 rounded-md">
+        Business added successfully! Redirecting...
+      </div>
+    )}
     
     <form method="POST" class="space-y-6">
       <div>

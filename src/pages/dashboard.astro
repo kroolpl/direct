@@ -22,10 +22,15 @@ if (error || !session) {
 }
 
 // Fetch user's businesses
-const { data: businesses } = await supabase
+console.log('Fetching businesses for user:', session.user.id);
+const { data: businesses, error: businessError } = await supabase
   .from('businesses')
   .select('*')
   .eq('user_id', session.user.id);
+
+if (businessError) {
+  console.error('Error fetching businesses:', businessError);
+}
 console.log('User businesses:', businesses);
 ---
 
@@ -46,14 +51,14 @@ console.log('User businesses:', businesses);
   <div class="max-w-7xl mx-auto py-6">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold text-gray-900">My Dashboard</h1>
-      <button
-        id="logoutBtn"
-        formaction="/api/auth/signout"
-        formmethod="POST"
-        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-      >
-        Logout
-      </button>
+      <form action="/api/auth/signout" method="POST">
+        <button
+          type="submit"
+          class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+        >
+          Logout
+        </button>
+      </form>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6">
