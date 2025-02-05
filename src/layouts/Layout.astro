@@ -1,10 +1,12 @@
 ---
 import "../styles/global.css";
+import { supabase } from '../lib/supabase';
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+const { data: { session } } = await supabase.auth.getSession();
 ---
 
 <!DOCTYPE html>
@@ -12,7 +14,7 @@ const { title } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>{title} - Business Directory</title>
+    <title>{title} - Business Directory </title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="min-h-screen bg-gray-50 font-['Inter']">
@@ -24,7 +26,21 @@ const { title } = Astro.props;
               Business Directory
             </a>
           </div>
-          <div class="flex items-center">
+          <div class="flex items-center space-x-4">
+            {session ? (
+              <a href="/dashboard" class="text-gray-600 hover:text-gray-900">
+                Dashboard
+              </a>
+            ) : (
+              <div class="flex items-center space-x-4">
+                <a href="/login" class="text-gray-600 hover:text-gray-900">
+                  Login
+                </a>
+                <a href="/register" class="text-gray-600 hover:text-gray-900">
+                  Register
+                </a>
+              </div>
+            )}
             <a href="/submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">
               Add Business
             </a>

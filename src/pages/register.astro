@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import RegisterForm from '../components/RegisterForm.astro';
+import { supabase } from '../lib/supabase';
+
+// Redirect if already logged in
+const { data: { session } } = await supabase.auth.getSession();
+if (session) {
+  return Astro.redirect('/dashboard');
+}
+---
+
+<Layout title="Register">
+  <div class="max-w-2xl mx-auto py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-8 text-center">Create an Account</h1>
+    <RegisterForm />
+  </div>
+</Layout> 

@@ -2,6 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
+// Check authentication
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) {
+  return Astro.redirect('/login');
+}
+
 // Handle form submission
 if (Astro.request.method === 'POST') {
   try {
@@ -19,6 +25,7 @@ if (Astro.request.method === 'POST') {
       category: formData.get('category'),
       website: formData.get('website'),
       phone: formData.get('phone'),
+      user_id: session.user.id,
     };
 
     const { error } = await supabase

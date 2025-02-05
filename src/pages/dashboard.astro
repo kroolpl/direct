@@ -1,0 +1,72 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+// Check authentication
+const { data: { session } } = await supabase.auth.getSession();
+console.log('Dashboard session:', session);
+if (!session) {
+  console.log('No session, redirecting to login');
+  return Astro.redirect('/login');
+}
+
+// Fetch user's businesses
+const { data: businesses } = await supabase
+  .from('businesses')
+  .select('*')
+  .eq('user_id', session.user.id);
+console.log('User businesses:', businesses);
+---
+
+<Layout title="Dashboard">
+  <script>
+    // Double-check session on client side
+    import { supabase } from '../lib/supabase';
+    
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('/login');
+      }
+    }
+    
+    checkSession();
+  </script>
+  <div class="max-w-7xl mx-auto py-6">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">My Dashboard</h1>
+      <button
+        id="logoutBtn"
+        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+      >
+        Logout
+      </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">My Businesses</h2>
+      {businesses && businesses.length > 0 ? (
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {businesses.map((business) => (
+            <div class="border rounded-lg p-4">
+              <h3 class="font-medium">{business.name}</h3>
+              <p class="text-gray-600 text-sm mt-2">{business.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="text-gray-600">You haven't added any businesses yet.</p>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  logoutBtn?.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  });
+</script> 
