@@ -2,12 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 import { supabase, type Business } from '../../lib/supabase';
 
-const { id } = Astro.params;
+const { slug } = Astro.params;
 
 const { data: business, error } = await supabase
   .from('businesses')
   .select('*')
-  .eq('id', id)
+  .eq('slug', slug)
   .single();
 
 if (error || !business) {

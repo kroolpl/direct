@@ -44,7 +44,7 @@ const categories = ['All', 'Retail', 'Restaurant', 'Services', 'Technology', 'Ot
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {businesses?.map((business: Business) => (
         <a 
-          href={`/business/${business.id}`}
+          href={`/business/${business.slug}`}
           class="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-blue-100"
         >
           <div class="flex items-center justify-between">
