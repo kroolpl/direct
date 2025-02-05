@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import "../styles/global.css";
 import { supabase, type Business } from '../lib/supabase';
+import SearchBar from '../components/SearchBar.astro';
 
 const { data: businesses, error } = await supabase
   .from('businesses')
@@ -32,6 +33,8 @@ const categories = ['All', 'Retail', 'Restaurant', 'Services', 'Technology', 'Ot
     </div>
   </div>
 
+  <SearchBar categories={categories} />
+
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex overflow-x-auto pb-4 mb-6 gap-2">
       {categories.map(category => (
@@ -45,7 +48,10 @@ const categories = ['All', 'Retail', 'Restaurant', 'Services', 'Technology', 'Ot
       {businesses?.map((business: Business) => (
         <a 
           href={`/business/${business.slug}`}
-          class="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-blue-100"
+          class="business-card block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-blue-100"
+          data-name={business.name}
+          data-description={business.description}
+          data-category={business.category}
         >
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold text-gray-900">{business.name}</h2>
