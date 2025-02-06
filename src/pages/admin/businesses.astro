@@ -60,9 +60,45 @@ const totalPages = Math.ceil((count || 0) / limit);
     <div class="divide-y">
       {businesses?.map((business) => (
         <div class="p-6 hover:bg-gray-50">
-          {/* Similar business card layout as dashboard */}
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-medium text-lg">{business.name}</h3>
+              <p class="text-sm text-gray-500">Submitted by: {business.users?.email}</p>
+              <p class="text-sm text-gray-500">Category: {business.category}</p>
+              <p class="mt-2 text-gray-600">{business.description}</p>
+              <div class="mt-2 text-sm text-gray-500">
+                <p>Address: {business.address}</p>
+                {business.website && <p>Website: {business.website}</p>}
+                {business.phone && <p>Phone: {business.phone}</p>}
+              </div>
+            </div>
+            {status === 'pending' && (
+              <div class="flex gap-2">
+                <button
+                  data-business-id={business.id}
+                  data-action="approve"
+                  class="approve-btn px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Approve
+                </button>
+                <button
+                  data-business-id={business.id}
+                  data-action="reject"
+                  class="reject-btn px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       ))}
+      
+      {(!businesses || businesses.length === 0) && (
+        <div class="p-6 text-center text-gray-500">
+          No businesses found for the selected status.
+        </div>
+      )}
     </div>
 
     {totalPages > 1 && (
@@ -78,4 +114,55 @@ const totalPages = Math.ceil((count || 0) / limit);
       </div>
     )}
   </div>
-</AdminLayout> 
+</AdminLayout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  document.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.matches('.approve-btn, .reject-btn')) return;
+
+    const businessId = target.dataset.businessId;
+    const action = target.dataset.action;
+    if (!businessId || !action) return;
+
+    try {
+      target.disabled = true;
+      target.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+
+      const { error } = await supabase
+        .from('businesses')
+        .update({ 
+          status: action === 'approve' ? 'approved' : 'rejected',
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', businessId);
+
+      if (error) throw error;
+
+      // Remove the business card from the UI
+      const card = target.closest('.p-6');
+      card?.remove();
+
+      // Show empty state if no more businesses
+      const businessCards = document.querySelectorAll('.p-6');
+      if (businessCards.length === 0) {
+        const listContainer = document.querySelector('.divide-y');
+        if (listContainer) {
+          listContainer.innerHTML = `
+            <div class="p-6 text-center text-gray-500">
+              No businesses found for the selected status.
+            </div>
+          `;
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      target.disabled = false;
+      target.textContent = action === 'approve' ? 'Approve' : 'Reject';
+    }
+  });
+</script> 
