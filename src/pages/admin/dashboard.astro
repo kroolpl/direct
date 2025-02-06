@@ -1,5 +1,6 @@
+---
 import Layout from '../../layouts/Layout.astro';
-import { supabase } from '../../lib/supabase';
+import { supabase, type Business } from '../../lib/supabase';
 
 // Check if user is admin
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -35,6 +36,7 @@ const { data: pendingBusinesses } = await supabase
   .select('*')
   .eq('status', 'pending')
   .order('created_at', { ascending: false });
+  ---
 
 <Layout title="Admin Dashboard">
   <div class="max-w-7xl mx-auto py-6">

@@ -1,5 +1,3 @@
-import { Client } from '@elastic/elasticsearch';
-
 const client = new Client({
   cloud: {
     id: import.meta.env.ELASTICSEARCH_CLOUD_ID
