@@ -1,0 +1,81 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabase, type Business } from '../../lib/supabase';
+
+// Get query parameters
+const status = Astro.url.searchParams.get('status') || 'all';
+const page = parseInt(Astro.url.searchParams.get('page') || '1');
+const limit = 20;
+
+// Build query
+let query = supabase
+  .from('businesses')
+  .select('*, users(email)', { count: 'exact' });
+
+if (status !== 'all') {
+  query = query.eq('status', status);
+}
+
+const { data: businesses, count } = await query
+  .order('created_at', { ascending: false })
+  .range((page - 1) * limit, page * limit - 1);
+
+const totalPages = Math.ceil((count || 0) / limit);
+---
+
+<AdminLayout title="Manage Businesses">
+  <div class="bg-white rounded-lg shadow-sm">
+    <div class="p-6 border-b">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">Manage Businesses</h2>
+        <div class="flex gap-2">
+          <a 
+            href="/admin/businesses?status=all" 
+            class={`px-4 py-2 rounded-md ${status === 'all' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+          >
+            All
+          </a>
+          <a 
+            href="/admin/businesses?status=pending" 
+            class={`px-4 py-2 rounded-md ${status === 'pending' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+          >
+            Pending
+          </a>
+          <a 
+            href="/admin/businesses?status=approved" 
+            class={`px-4 py-2 rounded-md ${status === 'approved' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+          >
+            Approved
+          </a>
+          <a 
+            href="/admin/businesses?status=rejected" 
+            class={`px-4 py-2 rounded-md ${status === 'rejected' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+          >
+            Rejected
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="divide-y">
+      {businesses?.map((business) => (
+        <div class="p-6 hover:bg-gray-50">
+          {/* Similar business card layout as dashboard */}
+        </div>
+      ))}
+    </div>
+
+    {totalPages > 1 && (
+      <div class="p-4 border-t flex justify-center gap-2">
+        {Array.from({ length: totalPages }, (_, i) => (
+          <a
+            href={`/admin/businesses?status=${status}&page=${i + 1}`}
+            class={`px-4 py-2 rounded-md ${page === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}
+          >
+            {i + 1}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</AdminLayout> 

@@ -1,0 +1,57 @@
+---
+import Layout from './Layout.astro';
+import { supabase } from '../lib/supabase';
+
+// Admin authentication guard
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/login');
+}
+
+const { data: { session }, error } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+});
+
+if (error || !session) {
+  return Astro.redirect('/login');
+}
+
+const { data: userRoles } = await supabase
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', session.user.id)
+  .single();
+
+if (!userRoles || userRoles.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={`Admin - ${title}`}>
+  <div class="flex min-h-screen">
+    <!-- Admin Sidebar -->
+    <aside class="w-64 bg-white shadow-md">
+      <nav class="p-4 space-y-2">
+        <a href="/admin/dashboard" class="block p-2 rounded hover:bg-gray-50">
+          Dashboard
+        </a>
+        <a href="/admin/businesses" class="block p-2 rounded hover:bg-gray-50">
+          All Businesses
+        </a>
+        <a href="/admin/users" class="block p-2 rounded hover:bg-gray-50">
+          Users
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 bg-gray-50 p-8">
+      <slot />
+    </main>
+  </div>
+</Layout> 
