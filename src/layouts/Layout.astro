@@ -10,6 +10,7 @@ const { title } = Astro.props;
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
 let session = null;
+let isAdminUser = false;
 
 if (accessToken && refreshToken) {
   const { data } = await supabase.auth.setSession({
@@ -17,6 +18,15 @@ if (accessToken && refreshToken) {
     refresh_token: refreshToken.value,
   });
   session = data.session;
+}
+
+if (session) {
+  const { data: userRoles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .single();
+  isAdminUser = userRoles?.role === 'admin';
 }
 ---
 
@@ -63,6 +73,17 @@ if (accessToken && refreshToken) {
                   Register
                 </a>
               </div>
+            )}
+            {isAdminUser && (
+              <a
+                href="/admin/dashboard"
+                class="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Admin Dashboard
+              </a>
             )}
             <a 
               href="/submit" 

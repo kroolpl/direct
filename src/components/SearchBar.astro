@@ -27,14 +27,15 @@ const { categories } = Astro.props;
 
   <div class="flex flex-wrap gap-2">
     <button
-      class="category-filter px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors data-[active=true]:bg-blue-50 data-[active=true]:border-blue-500 data-[active=true]:text-blue-600"
+      class="category-filter px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
       data-category="all"
+      data-active="true"
     >
       All
     </button>
     {categories.map(category => (
       <button
-        class="category-filter px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors data-[active=true]:bg-blue-50 data-[active=true]:border-blue-500 data-[active=true]:text-blue-600"
+        class="category-filter px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
         data-category={category.toLowerCase()}
       >
         {category}
@@ -50,7 +51,7 @@ const { categories } = Astro.props;
   let activeCategory = 'all';
 
   function filterBusinesses() {
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = searchInput?.value.toLowerCase() || '';
 
     businessCards.forEach((card: Element) => {
       const businessCard = card as HTMLElement;
@@ -67,22 +68,29 @@ const { categories } = Astro.props;
     });
   }
 
-  // Search input handler
-  searchInput?.addEventListener('input', filterBusinesses);
+  // Search input handler with debounce
+  let searchTimeout: NodeJS.Timeout;
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(filterBusinesses, 300);
+  });
 
   // Category filter handlers
   categoryButtons.forEach(button => {
     button.addEventListener('click', () => {
-      // Update active state
-      categoryButtons.forEach(btn => btn.setAttribute('data-active', 'false'));
+      categoryButtons.forEach(btn => {
+        btn.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-600');
+        btn.setAttribute('data-active', 'false');
+      });
+      
+      button.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-600');
       button.setAttribute('data-active', 'true');
       
-      // Update active category and filter
       activeCategory = button.getAttribute('data-category') || 'all';
       filterBusinesses();
     });
   });
 
   // Set initial active state
-  document.querySelector('[data-category="all"]')?.setAttribute('data-active', 'true');
+  document.querySelector('[data-category="all"]')?.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-600');
 </script> 

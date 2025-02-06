@@ -43,6 +43,7 @@ if (Astro.request.method === 'POST') {
       website: formData.get('website'),
       phone: formData.get('phone'),
       user_id: session.user.id,
+      status: 'pending'
     };
 
     const { error: insertError } = await supabase

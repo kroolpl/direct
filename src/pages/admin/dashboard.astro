@@ -1,0 +1,118 @@
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+
+// Check if user is admin
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/login');
+}
+
+const { data: { session }, error } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+});
+
+if (error || !session) {
+  return Astro.redirect('/login');
+}
+
+// Check if user has admin role
+const { data: userRoles } = await supabase
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', session.user.id)
+  .single();
+
+if (!userRoles || userRoles.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+// Fetch pending businesses
+const { data: pendingBusinesses } = await supabase
+  .from('businesses')
+  .select('*')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: false });
+
+<Layout title="Admin Dashboard">
+  <div class="max-w-7xl mx-auto py-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Pending Approvals</h2>
+      {pendingBusinesses && pendingBusinesses.length > 0 ? (
+        <div class="space-y-4">
+          {pendingBusinesses.map((business) => (
+            <div class="border rounded-lg p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium">{business.name}</h3>
+                  <p class="text-gray-600 text-sm mt-2">{business.description}</p>
+                  <div class="mt-2 text-sm text-gray-500">
+                    <p>Category: {business.category}</p>
+                    <p>Address: {business.address}</p>
+                    {business.website && <p>Website: {business.website}</p>}
+                    {business.phone && <p>Phone: {business.phone}</p>}
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    data-business-id={business.id}
+                    data-action="approve"
+                    class="approve-btn bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    data-business-id={business.id}
+                    data-action="reject"
+                    class="reject-btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="text-gray-600">No pending businesses to review.</p>
+      )}
+    </div>
+  </div>
+
+  <script>
+    import { supabase } from '../../lib/supabase';
+
+    document.addEventListener('click', async (e) => {
+      const target = e.target as HTMLElement;
+      if (target.matches('.approve-btn, .reject-btn')) {
+        const businessId = target.dataset.businessId;
+        const action = target.dataset.action;
+        
+        if (!businessId || !action) return;
+
+        try {
+          const { error } = await supabase
+            .from('businesses')
+            .update({ status: action === 'approve' ? 'approved' : 'rejected' })
+            .eq('id', businessId);
+
+          if (error) throw error;
+          
+          // Remove the business card from the UI
+          const card = target.closest('.border');
+          card?.remove();
+          
+          // Show success message
+          alert(`Business ${action}d successfully!`);
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+        }
+      }
+    });
+  </script>
+</Layout> 
